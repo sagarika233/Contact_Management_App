@@ -1,0 +1,3 @@
+- [x] Remove lovable-tagger import and usage from vite.config.ts
+- [x] Remove lovable-tagger dependency from package.json
+- [ ] Run npm install to update dependencies
