@@ -6,21 +6,45 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
+        try {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setError(null);
+        } catch (err) {
+          setError('Failed to update auth state');
+          console.error('Auth state change error:', err);
+        } finally {
+          setIsLoading(false);
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      try {
+        if (error) {
+          setError('Failed to get session');
+          console.error('Session error:', error);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setError(null);
+        }
+      } catch (err) {
+        setError('Failed to process session');
+        console.error('Session processing error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }).catch((err) => {
+      setError('Failed to retrieve session');
+      console.error('Session retrieval error:', err);
       setIsLoading(false);
     });
 
@@ -60,6 +84,7 @@ export const useAuth = () => {
     user,
     session,
     isLoading,
+    error,
     signUp,
     signIn,
     signOut,
